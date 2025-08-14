@@ -4,7 +4,7 @@ import { User } from "./user.model";
 import {
   attachAuditHooks,
   AuditEvent,
-} from "@clean-code-id/nest-sequelize-auditor";
+} from "@cleancode-id/nestjs-sequelize-auditor";
 
 export interface CreateUserDto {
   name: string;

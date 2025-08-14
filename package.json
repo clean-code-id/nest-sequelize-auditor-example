@@ -18,7 +18,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@clean-code-id/nest-sequelize-auditor": "file:../package",
+    "@cleancode-id/nestjs-sequelize-auditor": "file:../package",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
