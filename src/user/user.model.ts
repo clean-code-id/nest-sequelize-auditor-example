@@ -3,6 +3,7 @@ import { Column, Model, Table, DataType } from "sequelize-typescript";
 @Table({
   tableName: "users",
   timestamps: true,
+  underscored: true,
 })
 export class User extends Model {
   @Column({

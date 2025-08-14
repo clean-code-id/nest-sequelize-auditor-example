@@ -4,7 +4,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RequestContextInterceptor, AuditModule, AuditModel } from '@clean-code-id/nest-sequelize-auditor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { UserModule } from './user/user.module';
-import { User } from './user/user.model';
 
 @Module({
   imports: [

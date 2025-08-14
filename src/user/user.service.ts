@@ -1,7 +1,10 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { User } from './user.model';
-import { attachAuditHooks } from '@clean-code-id/nest-sequelize-auditor';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { InjectModel } from "@nestjs/sequelize";
+import { User } from "./user.model";
+import {
+  attachAuditHooks,
+  AuditEvent,
+} from "@clean-code-id/nest-sequelize-auditor";
 
 export interface CreateUserDto {
   name: string;
@@ -19,20 +22,24 @@ export interface UpdateUserDto {
 export class UserService implements OnModuleInit {
   constructor(
     @InjectModel(User)
-    private userModel: typeof User,
+    private userModel: typeof User
   ) {}
 
   onModuleInit() {
-    // 🎉 COMPLETELY SEAMLESS! 
-    // - No audit model setup needed
-    // - No setAuditModel() calls needed  
-    // - Just attach hooks and everything auto-initializes!
+    // Just attach hooks and everything auto-initializes!
     attachAuditHooks(this.userModel, {
-      exclude: ['createdAt', 'updatedAt'],
+      // exclude fields from audit
+      exclude: ["created_at", "updated_at"],
+
+      // Selective audit events
+      auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
     });
   }
 
-  async createUser(createUserDto: CreateUserDto, userId?: number): Promise<User> {
+  async createUser(
+    createUserDto: CreateUserDto,
+    userId?: number
+  ): Promise<User> {
     // Just use Sequelize - audit hooks handle everything automatically!
     return this.userModel.create(createUserDto as any);
   }
@@ -45,7 +52,11 @@ export class UserService implements OnModuleInit {
     return this.userModel.findByPk(id);
   }
 
-  async updateUser(id: number, updateUserDto: UpdateUserDto, userId?: number): Promise<User | null> {
+  async updateUser(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    userId?: number
+  ): Promise<User | null> {
     const user = await this.userModel.findByPk(id);
     if (!user) {
       return null;
