@@ -1,8 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './user.model';
-import { attachAuditHooks, setAuditModel } from '@clean-code-id/nest-sequelize-auditor';
-import { Audit } from '../audit/audit.model';
+import { attachAuditHooks } from '@clean-code-id/nest-sequelize-auditor';
 
 export interface CreateUserDto {
   name: string;
@@ -24,10 +23,13 @@ export class UserService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    // Configure audit model for the package
-    setAuditModel(Audit);
-    // Attach automatic audit hooks to the User model
-    attachAuditHooks(this.userModel);
+    // 🎉 COMPLETELY SEAMLESS! 
+    // - No audit model setup needed
+    // - No setAuditModel() calls needed  
+    // - Just attach hooks and everything auto-initializes!
+    attachAuditHooks(this.userModel, {
+      exclude: ['createdAt', 'updatedAt'],
+    });
   }
 
   async createUser(createUserDto: CreateUserDto, userId?: number): Promise<User> {

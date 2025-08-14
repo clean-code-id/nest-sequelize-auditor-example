@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 
 @Module({
-  imports: [SequelizeModule.forFeature([User])],
+  imports: [SequelizeModule.forFeature([User])], // 🎉 No manual audit model needed!
   providers: [UserService],
   controllers: [UserController],
   exports: [UserService],

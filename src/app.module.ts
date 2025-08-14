@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RequestContextInterceptor } from '@clean-code-id/nest-sequelize-auditor';
+import { RequestContextInterceptor, AuditModule, AuditModel } from '@clean-code-id/nest-sequelize-auditor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { UserModule } from './user/user.module';
-import { AuditModule } from './audit/audit.module';
+import { User } from './user/user.model';
 
 @Module({
   imports: [
@@ -27,7 +27,14 @@ import { AuditModule } from './audit/audit.module';
       }),
       inject: [ConfigService],
     }),
-    AuditModule,
+    
+    // 🎉 ONE-LINE AUDIT SETUP! No more manual audit model creation
+    AuditModule.forRoot({
+      autoSync: true,        // Auto-create audit table
+      alterTable: false,     // Don't alter existing table
+      isGlobal: true,        // Make it globally available
+    }),
+    
     UserModule,
   ],
   providers: [
