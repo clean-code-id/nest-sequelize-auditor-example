@@ -10,21 +10,15 @@ This example demonstrates how to use `@cleancode-id/nestjs-sequelize-auditor` in
 
 ## 🚀 Quick Start (For Users)
 
-If you just want to try the published package:
+If you just want to try the package in your own project:
 
 ```bash
-# Clone and install
-git clone https://github.com/clean-code-id/nest-sequelize-auditor.git
-cd nest-sequelize-auditor/example
-npm install
-
-# Install the published package (instead of local link)
+# Install the package
 npm install @cleancode-id/nestjs-sequelize-auditor
 
-# Setup database and run
-cp .env.example .env
-# Edit .env with your database credentials
-npm run start:dev
+# Setup in your NestJS app (see main package's README for full setup)
+# app.module.ts: Add AuditModule.forRoot()
+# your.service.ts: Add attachAuditHooks() in onModuleInit()
 ```
 
 ## 🛠️ Development Setup (For Contributors)
@@ -40,7 +34,7 @@ If you want to contribute to the package and test local changes:
 ### Step 1: Clone Both Repositories
 
 ```bash
-# Create a workspace directory and clone both repos at the same level
+# Create a workspace directory and clone both (example and package) repos at the same level
 mkdir nestjs-auditor-workspace
 cd nestjs-auditor-workspace
 
@@ -158,20 +152,43 @@ You should see audit records with:
 
 ### Testing Different Configurations
 
-The example is configured to test:
-- ✅ Selective audit events (created, updated, deleted)
-- ✅ Field exclusion (created_at, updated_at)
-- ✅ Automatic table creation with snake_case columns
-- ✅ Request context capture
-
-You can modify `src/user/user.service.ts` to test different configurations:
+#### **Module Configuration (app.module.ts)**
+Test different `AuditModule.forRoot()` options:
 
 ```typescript
-// Test different audit events
+// Enable auto table creation (default)
+AuditModule.forRoot({
+  autoSync: true,        // ✅ Creates audit table automatically
+  alterTable: false,     // Don't alter existing table structure
+  tableName: 'audits',   // Custom table name (optional)
+  isGlobal: true,        // Make module globally available
+})
+
+// Disable auto table creation (manual setup)
+AuditModule.forRoot({
+  autoSync: false,       // ❌ Don't create table - manual setup required
+})
+```
+
+#### **Hook Configuration (user.service.ts)**
+Test different `attachAuditHooks()` options:
+
+```typescript
+// Basic setup - all events
+attachAuditHooks(this.userModel, {
+  exclude: ['created_at', 'updated_at'],
+});
+
+// Only specific events
 attachAuditHooks(this.userModel, {
   auditEvents: [AuditEvent.DELETED], // Only deletions
   exclude: ['created_at', 'updated_at'],
   mask: ['phone'], // Mask phone numbers
+});
+
+// Everything enabled
+attachAuditHooks(this.userModel, {
+  auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED, AuditEvent.RESTORED],
 });
 ```
 
@@ -206,9 +223,10 @@ cd ../example && npm link @cleancode-id/nestjs-sequelize-auditor
 - Ensure database exists
 
 ### "Table doesn't exist" errors
-- The audit table is created automatically
-- Check database permissions
-- Clear database and restart app
+- ✅ **v1.0.1+**: Audit table is created automatically during app startup via `AuditModule.forRoot()`
+- Check that `autoSync: true` is set in your module configuration
+- Verify database permissions for table creation
+- Check application logs for "🎉 AuditModule: Audit table created successfully" message
 
 ### Example doesn't reflect package changes
 ```bash
@@ -221,12 +239,22 @@ cd ../example && npm run start:dev
 
 ## 🎯 What This Example Demonstrates
 
-- **Zero Configuration**: Just import `AuditModule.forRoot()`
-- **Automatic Setup**: Audit table created automatically
-- **Snake Case**: Database uses proper snake_case conventions
+### ✅ **Laravel-like Experience**
+- **One-Line Setup**: Just `AuditModule.forRoot({ autoSync: true })` creates the audit table
+- **Configuration Control**: Module options directly control table creation behavior
+- **Zero Manual Setup**: No migrations needed - table created during app startup
+
+### ✅ **Advanced Features**
+- **Automatic Table Creation**: Controlled by `AuditModule.forRoot()` options
+- **Snake Case Database**: Proper snake_case column conventions
 - **Selective Events**: Only audits created, updated, deleted events
 - **Field Control**: Excludes timestamp fields from audit
-- **Request Context**: Captures IP, user agent, etc. (when interceptor is active)
+- **Request Context**: Captures IP, user agent, URL, etc.
+
+### ✅ **Performance Optimized**
+- **Single Initialization**: Audit table created once during app startup
+- **No Runtime Overhead**: Zero performance impact on CRUD operations
+- **Global Configuration**: One module setup serves all auditable models
 
 ## 📊 Audit Table Structure
 
