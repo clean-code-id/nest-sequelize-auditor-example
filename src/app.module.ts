@@ -32,6 +32,7 @@ import { AuthModule } from "./auth/auth.module";
       autoSync: true, // Auto-create audit table
       alterTable: false, // Don't alter existing table
       isGlobal: true, // Make it globally available
+      onlyDirty: true, // 🆕 GLOBAL: Only log changed fields
       auth: {
         type: "passport", // Use Passport.js authentication
         userProperty: "user", // Default: 'user' (req.user)

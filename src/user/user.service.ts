@@ -37,6 +37,10 @@ export class UserService implements OnModuleInit {
 
       // Selective audit events
       auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
+      
+      // 🆕 PER-MODEL OVERRIDE: Even though global onlyDirty=true, 
+      // this User model will log FULL state (for compliance/legal reasons)
+      onlyDirty: false,
     });
   }
 
