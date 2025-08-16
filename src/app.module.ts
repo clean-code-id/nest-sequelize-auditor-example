@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RequestContextInterceptor, AuditModule } from '@cleancode-id/nestjs-sequelize-auditor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -27,20 +28,25 @@ import { UserModule } from './user/user.module';
       inject: [ConfigService],
     }),
     
-    // 🎉 ONE-LINE AUDIT SETUP! No more manual audit model creation
+    // 🎉 ONE-LINE AUDIT SETUP with Passport Authentication Support!
     AuditModule.forRoot({
       autoSync: true,        // Auto-create audit table
       alterTable: false,     // Don't alter existing table
       isGlobal: true,        // Make it globally available
+      auth: {
+        type: 'passport',    // Use Passport.js authentication
+        userProperty: 'user', // Default: 'user' (req.user)
+        userIdField: 'user_id', // For your friend's case: req.user.user_id
+        // userIdField: 'id',   // Standard case: req.user.id
+        // userIdField: 'sub',  // JWT standard: req.user.sub
+      },
     }),
     
+    AuthModule,
     UserModule,
   ],
   providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: RequestContextInterceptor,
-    },
+    // RequestContextInterceptor moved to AuditModule - it's auto-registered globally
   ],
 })
 export class AppModule {}

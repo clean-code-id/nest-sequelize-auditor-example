@@ -93,7 +93,23 @@ DATABASE_NAME=nest-sequelize-auditor-example
 CREATE DATABASE IF NOT EXISTS `nest-sequelize-auditor-example`;
 ```
 
-### Step 6: Start Development
+### Step 6: Run Seeders
+
+**⚠️ IMPORTANT**: Run the seeders to create test users for authentication:
+
+```bash
+# Install dotenv for seeder configuration
+npm install dotenv
+
+# Run seeders to create admin@cleancode.id and user@cleancode.id
+npx sequelize-cli db:seed:all --config config/config.js
+```
+
+This creates:
+- **admin@cleancode.id** / password: `password`
+- **user@cleancode.id** / password: `password`
+
+### Step 7: Start Development
 
 ```bash
 # Terminal 1: Watch package changes (optional)
@@ -109,37 +125,96 @@ npm run start:dev
 
 Once the application is running on `http://localhost:8001`, you can test the audit functionality:
 
-### 1. Create a User
+### 🔐 Authentication Testing
+
+The package now supports **automatic user tracking** with Passport JWT authentication!
+
+#### 1. Login to Get JWT Token
 ```bash
+# Login as admin
+curl -X POST http://localhost:8001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@cleancode.id",
+    "password": "password"
+  }'
+
+# Response: {"access_token": "eyJhbGciOiJIUzI1NiIs...", "user": {...}}
+```
+
+#### 2. Create User WITH Authentication (Automatic User ID Capture)
+```bash
+# Use the access_token from login response
 curl -X POST http://localhost:8001/users \
   -H "Content-Type: application/json" \
-  -d '{"name": "John Doe", "email": "john@example.com", "phone": "123-456-7890"}'
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
+  -d '{
+    "name": "New User via Auth",
+    "email": "newuser@cleancode.id",
+    "phone": "123-456-7890",
+    "password": "userpass"
+  }'
 ```
 
-### 2. Update a User
+#### 3. Create User WITHOUT Authentication (Manual User ID)
 ```bash
-curl -X PUT http://localhost:8001/users/1 \
+# For comparison - manual user_id specification
+curl -X POST "http://localhost:8001/users/no-auth?acting_user_id=999" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Jane Doe", "email": "jane@example.com"}'
+  -d '{
+    "name": "Manual User",
+    "email": "manual@cleancode.id",
+    "phone": "987-654-3210",
+    "password": "userpass"
+  }'
 ```
 
-### 3. Delete a User
+#### 4. Update a User with Authentication
 ```bash
-curl -X DELETE http://localhost:8001/users/1
+curl -X PUT http://localhost:8001/users/3 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
+  -d '{"name": "Updated Name"}'
 ```
 
-### 4. Check Audit Records
+#### 5. Delete a User with Authentication
+```bash
+curl -X DELETE http://localhost:8001/users/3 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+### 📊 Check Audit Records
 ```sql
 -- Connect to your database and check audit table
 USE `nest-sequelize-auditor-example`;
-SELECT * FROM audits ORDER BY created_at DESC;
+SELECT 
+  id,
+  event,
+  table_name,
+  record_id,
+  user_id,  -- This should show real user IDs (1, 2) or manual (999)
+  url,
+  created_at
+FROM audits 
+ORDER BY created_at DESC;
 ```
 
 You should see audit records with:
+- `user_id`: **Real user IDs** (1, 2) from JWT tokens or **manual** (999)
 - `event`: 'created', 'updated', 'deleted'
 - `table_name`: 'users'
 - `old_values` and `new_values`: JSON data
 - Proper snake_case column names
+
+### 🎯 Expected Results
+
+| Operation | Authentication | user_id in Audit |
+|-----------|----------------|------------------|
+| Created by admin@cleancode.id | JWT Token | `"1"` |
+| Created by user@cleancode.id | JWT Token | `"2"` |
+| Created manually | Query param | `999` |
+
+This demonstrates **Laravel-like automatic user tracking**! 🚀
 
 ## 🔄 Development Workflow
 
@@ -241,8 +316,15 @@ cd ../example && npm run start:dev
 
 ### ✅ **Laravel-like Experience**
 - **One-Line Setup**: Just `AuditModule.forRoot({ autoSync: true })` creates the audit table
+- **Automatic User Tracking**: Seamless user capture with Passport JWT authentication
 - **Configuration Control**: Module options directly control table creation behavior
 - **Zero Manual Setup**: No migrations needed - table created during app startup
+
+### ✅ **Advanced Authentication Features**
+- **Passport Integration**: Works with NestJS Passport JWT out of the box
+- **Automatic User Resolution**: Extracts user ID from JWT tokens automatically
+- **Multiple Auth Strategies**: Configurable for different authentication setups
+- **Real User Tracking**: Captures actual database user IDs in audit trail
 
 ### ✅ **Advanced Features**
 - **Automatic Table Creation**: Controlled by `AuditModule.forRoot()` options

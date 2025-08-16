@@ -10,6 +10,7 @@ export interface CreateUserDto {
   name: string;
   email: string;
   phone?: string;
+  password: string;
 }
 
 export interface UpdateUserDto {
@@ -36,11 +37,9 @@ export class UserService implements OnModuleInit {
     });
   }
 
-  async createUser(
-    createUserDto: CreateUserDto,
-    userId?: number
-  ): Promise<User> {
-    // Just use Sequelize - audit hooks handle everything automatically!
+  async createUser(createUserDto: CreateUserDto, userId?: number): Promise<User> {
+    // ✨ Audit package automatically captures authenticated user from JWT!
+    // No manual userId needed - the audit hooks get it from request context
     return this.userModel.create(createUserDto as any);
   }
 
@@ -62,7 +61,7 @@ export class UserService implements OnModuleInit {
       return null;
     }
 
-    // Just update - audit hooks handle everything automatically!
+    // ✨ Audit package automatically captures authenticated user from JWT!
     await user.update(updateUserDto);
     return user;
   }
@@ -74,7 +73,7 @@ export class UserService implements OnModuleInit {
       return false;
     }
 
-    // Now destroy the instance - audit hooks handle everything automatically!
+    // ✨ Audit package automatically captures authenticated user from JWT!
     await user.destroy();
     return true;
   }
