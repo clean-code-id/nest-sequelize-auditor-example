@@ -212,7 +212,7 @@ You should see audit records with:
 |-----------|----------------|------------------|
 | Created by admin@cleancode.id | JWT Token | `"1"` |
 | Created by user@cleancode.id | JWT Token | `"2"` |
-| Created manually | Query param | `999` |
+| Created manually | Query param | `NULL` |
 
 This demonstrates **Laravel-like automatic user tracking**! 🚀
 
