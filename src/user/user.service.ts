@@ -32,12 +32,18 @@ export class UserService implements OnModuleInit {
       // exclude fields from audit
       exclude: ["created_at", "updated_at"],
 
+      // Mask sensitive fields
+      mask: ["password"],
+
       // Selective audit events
       auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
     });
   }
 
-  async createUser(createUserDto: CreateUserDto, userId?: number): Promise<User> {
+  async createUser(
+    createUserDto: CreateUserDto,
+    userId?: number
+  ): Promise<User> {
     // ✨ Audit package automatically captures authenticated user from JWT!
     // No manual userId needed - the audit hooks get it from request context
     return this.userModel.create(createUserDto as any);

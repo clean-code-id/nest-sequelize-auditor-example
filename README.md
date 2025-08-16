@@ -102,7 +102,7 @@ CREATE DATABASE IF NOT EXISTS `nest-sequelize-auditor-example`;
 npm install dotenv
 
 # Run seeders to create admin@cleancode.id and user@cleancode.id
-npx sequelize-cli db:seed:all --config config/config.js
+npx sequelize-cli db:seed:all
 ```
 
 This creates:
@@ -297,12 +297,6 @@ cd ../example && npm link @cleancode-id/nestjs-sequelize-auditor
 - Verify `.env` credentials
 - Ensure database exists
 
-### "Table doesn't exist" errors
-- ✅ **v1.0.1+**: Audit table is created automatically during app startup via `AuditModule.forRoot()`
-- Check that `autoSync: true` is set in your module configuration
-- Verify database permissions for table creation
-- Check application logs for "🎉 AuditModule: Audit table created successfully" message
-
 ### Example doesn't reflect package changes
 ```bash
 # Rebuild package
@@ -350,7 +344,7 @@ The package automatically creates an `audits` table with snake_case columns:
 | `record_id` | VARCHAR | ID of the audited record |
 | `old_values` | JSON | Previous values (for updates/deletes) |
 | `new_values` | JSON | New values (for creates/updates) |
-| `user_id` | VARCHAR | User performing the action |
+| `actor_id` | VARCHAR | Actor performing the action |
 | `ip` | VARCHAR | IP address |
 | `user_agent` | TEXT | Browser/client info |
 | `url` | VARCHAR | Request URL |
