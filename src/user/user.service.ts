@@ -30,15 +30,15 @@ export class UserService implements OnModuleInit {
     // Just attach hooks and everything auto-initializes!
     attachAuditHooks(this.userModel, {
       // exclude fields from audit
-      exclude: ["created_at", "updated_at"],
+      exclude: ["id", "createdAt", "updatedAt"],
 
       // Mask sensitive fields
       mask: ["password"],
 
       // Selective audit events
       auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
-      
-      // 🆕 PER-MODEL OVERRIDE: Even though global onlyDirty=true, 
+
+      // 🆕 PER-MODEL OVERRIDE: Even though global onlyDirty=true,
       // this User model will log FULL state (for compliance/legal reasons)
       onlyDirty: false,
     });
