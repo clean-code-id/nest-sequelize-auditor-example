@@ -23,9 +23,35 @@ export class UserController {
     return this.userService.createUser(createUserDto, userId);
   }
 
+  @Post('bulk')
+  @UseGuards(AuthGuard('jwt')) // 🔐 JWT Authentication Required
+  async createBulkUsers(@Body() createUsersDto: CreateUserDto[]) {
+    // ✨ Bulk create with automatic audit tracking!
+    return this.userService.createBulkUsers(createUsersDto);
+  }
+
+  @Put('bulk')
+  @UseGuards(AuthGuard('jwt')) // 🔐 JWT Authentication Required
+  async updateBulkUsers(@Body() updateData: { where: any; values: UpdateUserDto }) {
+    // ✨ Bulk update with automatic audit tracking!
+    return this.userService.updateBulkUsers(updateData.where, updateData.values);
+  }
+
+  @Delete('bulk')
+  @UseGuards(AuthGuard('jwt')) // 🔐 JWT Authentication Required
+  async deleteBulkUsers(@Body() deleteData: { where: any }) {
+    // ✨ Bulk delete with automatic audit tracking!
+    return this.userService.deleteBulkUsers(deleteData.where);
+  }
+
   @Get()
   async getAllUsers() {
     return this.userService.findAll();
+  }
+
+  @Get('audits')
+  async getAuditRecords() {
+    return this.userService.getAuditRecords();
   }
 
   @Get(':id')

@@ -5,6 +5,7 @@ import {
   attachAuditHooks,
   AuditEvent,
 } from "@cleancode-id/nestjs-sequelize-auditor";
+import { Sequelize } from "sequelize-typescript";
 
 export interface CreateUserDto {
   name: string;
@@ -23,7 +24,8 @@ export interface UpdateUserDto {
 export class UserService implements OnModuleInit {
   constructor(
     @InjectModel(User)
-    private userModel: typeof User
+    private userModel: typeof User,
+    private sequelize: Sequelize
   ) {}
 
   onModuleInit() {
@@ -40,7 +42,7 @@ export class UserService implements OnModuleInit {
 
       // 🆕 PER-MODEL OVERRIDE: Even though global onlyDirty=true,
       // this User model will log FULL state (for compliance/legal reasons)
-      onlyDirty: false,
+      onlyDirty: true,
     });
   }
 
@@ -86,5 +88,44 @@ export class UserService implements OnModuleInit {
     // ✨ Audit package automatically captures authenticated user from JWT!
     await user.destroy();
     return true;
+  }
+
+  async createBulkUsers(createUsersDto: CreateUserDto[]): Promise<User[]> {
+    // ✨ Bulk create with automatic audit tracking!
+    return this.userModel.bulkCreate(createUsersDto as any[]);
+  }
+
+  async updateBulkUsers(where: any, values: UpdateUserDto): Promise<{ affectedRows: number }> {
+    // ✨ Bulk update with automatic audit tracking!
+    const [affectedRows] = await this.userModel.update(values, { where });
+    return { affectedRows };
+  }
+
+  async deleteBulkUsers(where: any): Promise<{ affectedRows: number }> {
+    // ✨ Bulk delete with automatic audit tracking!
+    const affectedRows = await this.userModel.destroy({ where });
+    return { affectedRows };
+  }
+
+  async getAuditRecords(): Promise<any[]> {
+    // Query audit records to demonstrate the bulk operations
+    const [results] = await this.sequelize.query(`
+      SELECT 
+        id,
+        event,
+        auditable_type,
+        auditable_id,
+        actorable_type,
+        actorable_id,
+        JSON_EXTRACT(tags, '$.bulkOperation') as is_bulk_operation,
+        JSON_EXTRACT(tags, '$.affectedCount') as affected_count,
+        JSON_EXTRACT(new_values, '$.name') as user_name,
+        created_at
+      FROM audits 
+      WHERE auditable_type = 'User'
+      ORDER BY id DESC 
+      LIMIT 20
+    `);
+    return results as any[];
   }
 }
