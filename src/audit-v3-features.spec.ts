@@ -65,7 +65,7 @@ describe('v3.0.0 Features', () => {
   describe('Creator Relationships', () => {
     it('should support include: ["creator"] functionality', async () => {
       // Create a user first
-      const user = await userService.createUser({
+      await userService.createUser({
         name: 'John Doe',
         email: 'john@example.com',
         password: 'password123',
