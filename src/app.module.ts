@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuditModule } from "@cleancode-id/nestjs-sequelize-auditor";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
+import { PostModule } from "./post/post.module";
 
 @Module({
   imports: [
@@ -33,17 +34,17 @@ import { AuthModule } from "./auth/auth.module";
       alterTable: false, // Don't alter existing table
       isGlobal: true, // Make it globally available
       onlyDirty: true, // 🆕 GLOBAL: Only log changed fields
+      actorTypes: ['User'], // 🆕 Configure which models can be actors
       auth: {
         type: "passport", // Use Passport.js authentication
         userProperty: "user", // Default: 'user' (req.user)
         userIdField: "user_id", // For your friend's case: req.user.user_id
-        // userIdField: 'id',   // Standard case: req.user.id
-        // userIdField: 'sub',  // JWT standard: req.user.sub
       },
     }),
 
     AuthModule,
     UserModule,
+    PostModule,
   ],
   providers: [
     // RequestContextInterceptor moved to AuditModule - it's auto-registered globally

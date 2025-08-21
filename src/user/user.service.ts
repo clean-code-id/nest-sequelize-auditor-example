@@ -1,10 +1,6 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { User } from "./user.model";
-import {
-  attachAuditHooks,
-  AuditEvent,
-} from "@cleancode-id/nestjs-sequelize-auditor";
 import { Sequelize } from "sequelize-typescript";
 
 export interface CreateUserDto {
@@ -21,30 +17,12 @@ export interface UpdateUserDto {
 }
 
 @Injectable()
-export class UserService implements OnModuleInit {
+export class UserService {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
     private sequelize: Sequelize
   ) {}
-
-  onModuleInit() {
-    // Just attach hooks and everything auto-initializes!
-    attachAuditHooks(this.userModel, {
-      // exclude fields from audit
-      exclude: ["id", "createdAt", "updatedAt"],
-
-      // Mask sensitive fields
-      mask: ["password"],
-
-      // Selective audit events
-      auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
-
-      // 🆕 PER-MODEL OVERRIDE: Even though global onlyDirty=true,
-      // this User model will log FULL state (for compliance/legal reasons)
-      onlyDirty: true,
-    });
-  }
 
   async createUser(
     createUserDto: CreateUserDto,
@@ -95,7 +73,10 @@ export class UserService implements OnModuleInit {
     return this.userModel.bulkCreate(createUsersDto as any[]);
   }
 
-  async updateBulkUsers(where: any, values: UpdateUserDto): Promise<{ affectedRows: number }> {
+  async updateBulkUsers(
+    where: any,
+    values: UpdateUserDto
+  ): Promise<{ affectedRows: number }> {
     // ✨ Bulk update with automatic audit tracking!
     const [affectedRows] = await this.userModel.update(values, { where });
     return { affectedRows };

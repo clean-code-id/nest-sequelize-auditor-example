@@ -2,17 +2,16 @@ import { Column, Model, Table, DataType } from "sequelize-typescript";
 import { Auditable, AuditEvent } from "@cleancode-id/nestjs-sequelize-auditor";
 
 @Auditable({
-  exclude: ["password", "created_at", "updated_at"],
-  mask: ["password"],
+  exclude: ["created_at", "updated_at"],
   onlyDirty: false,
   auditEvents: [AuditEvent.CREATED, AuditEvent.UPDATED, AuditEvent.DELETED],
 })
 @Table({
-  tableName: "users",
+  tableName: "posts",
   timestamps: true,
   underscored: true,
 })
-export class User extends Model {
+export class Post extends Model {
   @Column({
     type: DataType.INTEGER,
     primaryKey: true,
@@ -24,24 +23,17 @@ export class User extends Model {
     type: DataType.STRING,
     allowNull: false,
   })
-  name: string;
+  title: string;
 
   @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    unique: true,
-  })
-  email: string;
-
-  @Column({
-    type: DataType.STRING,
+    type: DataType.TEXT,
     allowNull: true,
   })
-  phone?: string;
+  content?: string;
 
   @Column({
-    type: DataType.STRING,
-    allowNull: false,
+    type: DataType.BOOLEAN,
+    defaultValue: false,
   })
-  password: string;
+  published: boolean;
 }
