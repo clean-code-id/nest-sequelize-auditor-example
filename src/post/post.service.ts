@@ -45,4 +45,13 @@ export class PostService {
       where: { id },
     });
   }
+
+  async findAllWithPagination(page: number = 1, limit: number = 10): Promise<{rows: Post[], count: number}> {
+    const offset = (page - 1) * limit;
+    return this.postModel.findAndCountAll({
+      include: ['creator'],
+      limit,
+      offset,
+    });
+  }
 }

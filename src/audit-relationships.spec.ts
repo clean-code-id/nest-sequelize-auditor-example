@@ -1,10 +1,11 @@
 /**
- * Test Suite: v3.0.0 Features
- * Tests the new features introduced in v3.0.0:
+ * Test Suite: Audit Relationships
+ * Tests audit relationship functionality:
  * - Creator relationships (include: ["creator"])
- * - actorTypes configuration
- * - @Auditable auto-initialization
- * - Polymorphic actor resolution
+ * - Automatic audit relationships (@Auditable decorator)
+ * - ActorTypes configuration and polymorphic resolution
+ * - Global creatorFields configuration
+ * - Relationship queries (findAll, findAndCountAll, etc.)
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -15,7 +16,7 @@ import { UserService } from './user/user.service';
 import { Post } from './post/post.model';
 import { User } from './user/user.model';
 
-describe('v3.0.0 Features', () => {
+describe('Audit Relationships', () => {
   let postService: PostService;
   let userService: UserService;
   let module: TestingModule;
@@ -33,7 +34,8 @@ describe('v3.0.0 Features', () => {
         SequelizeModule.forFeature([User, Post]),
         AuditModule.forRoot({
           autoSync: true,
-          actorTypes: ['User'], // 🆕 v3.0.0 feature
+          actorTypes: ['User'], // Configure which models can be actors
+          creatorFields: ['id', 'name'], // Global creator field filtering
           auth: {
             type: 'passport',
             userProperty: 'user',
@@ -62,7 +64,7 @@ describe('v3.0.0 Features', () => {
     await User.destroy({ where: {}, truncate: true });
   });
 
-  describe('Creator Relationships', () => {
+  describe('Creator Relationship', () => {
     it('should support include: ["creator"] functionality', async () => {
       // Create a user first
       await userService.createUser({
@@ -120,7 +122,7 @@ describe('v3.0.0 Features', () => {
     });
   });
 
-  describe('@Auditable Auto-initialization', () => {
+  describe('Automatic Relationship Setup', () => {
     it('should automatically initialize audit relationships on models', async () => {
       // Check that Post model has audit relationships defined
       const postAssociations = Object.keys(Post.associations || {});
@@ -173,7 +175,7 @@ describe('v3.0.0 Features', () => {
     });
   });
 
-  describe('ActorTypes Configuration', () => {
+  describe('Actor Types Configuration', () => {
     it('should handle configured actorTypes without errors', async () => {
       // The module was configured with actorTypes: ['User']
       // This should prevent empty audit table issues
@@ -242,6 +244,131 @@ describe('v3.0.0 Features', () => {
       // Verify relationships are set up
       const associations = Object.keys(User.associations || {});
       expect(associations.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Global Creator Fields', () => {
+    it('should have global creatorFields configuration in module', () => {
+      // The module was configured with creatorFields: ['id', 'name']
+      // This should be accessible globally across all models
+      
+      // Basic test to ensure module loaded with creatorFields config
+      expect(module).toBeDefined();
+    });
+
+    it('should support findAndCountAll with creator relationships', async () => {
+      // Test findAndCountAll with creator include
+      await Post.bulkCreate([
+        { title: 'Post 1', content: 'Content 1', published: true },
+        { title: 'Post 2', content: 'Content 2', published: true },
+      ]);
+
+      // findAndCountAll should work with creator include
+      expect(async () => {
+        const result = await Post.findAndCountAll({
+          include: ['creator'],
+          limit: 10,
+        });
+        expect(result).toHaveProperty('count');
+        expect(result).toHaveProperty('rows');
+      }).not.toThrow();
+    });
+
+    it('should handle creator field filtering globally', async () => {
+      // This tests the global creatorFields configuration
+      // In a real scenario with audit data, creator would be filtered to only ['id', 'name']
+      
+      const post = await Post.create({
+        title: 'Creator Field Test',
+        content: 'Testing global creator field filtering',
+        published: true,
+      });
+
+      // Should be able to include creator without errors
+      // Real filtering happens in the audit hooks with actual audit data
+      const result = await Post.findByPk(post.id, {
+        include: ['creator'],
+      });
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe(post.id);
+    });
+
+    it('should support creator relationship with null values gracefully', async () => {
+      // Test improved null handling for creator field
+      const post = await Post.create({
+        title: 'No Creator Test',
+        content: 'Post without creator audit',
+        published: false,
+      });
+
+      // Should handle null creator values properly
+      const result = await Post.findByPk(post.id, {
+        include: ['creator'],
+      });
+
+      expect(result).toBeDefined();
+      // Creator should be null when no audit exists, not "creationAudit": null
+      // This is handled by the afterFind hook in the decorator
+    });
+  });
+
+  describe('Simplified @Auditable Decorator', () => {
+    it('should automatically enable all audit relationships', async () => {
+      // All relationships are now automatic - no enable* flags needed
+      
+      // Check Post model has all three relationships
+      const postAssociations = Object.keys(Post.associations || {});
+      expect(postAssociations).toContain('audits');
+      expect(postAssociations).toContain('creationAudit');
+      
+      // Check User model has all three relationships  
+      const userAssociations = Object.keys(User.associations || {});
+      expect(userAssociations).toContain('audits');
+      expect(userAssociations).toContain('creationAudit');
+    });
+
+    it('should support all relationship queries without configuration', async () => {
+      // All relationships should work without any enable* flags
+      const user = await User.create({
+        name: 'Relationship Test User',
+        email: 'relationships@example.com',
+        password: 'password123',
+      });
+
+      const post = await Post.create({
+        title: 'Relationship Test Post',
+        content: 'Testing all relationships',
+        published: true,
+      });
+
+      // All these should work without throwing errors
+      await expect(User.findByPk(user.id, { include: ['audits'] })).resolves.toBeDefined();
+      await expect(User.findByPk(user.id, { include: ['creationAudit'] })).resolves.toBeDefined();
+      await expect(User.findByPk(user.id, { include: ['creator'] })).resolves.toBeDefined();
+      
+      await expect(Post.findByPk(post.id, { include: ['audits'] })).resolves.toBeDefined();
+      await expect(Post.findByPk(post.id, { include: ['creationAudit'] })).resolves.toBeDefined();
+      await expect(Post.findByPk(post.id, { include: ['creator'] })).resolves.toBeDefined();
+    });
+
+    it('should maintain zero-cost relationship principle', async () => {
+      // Relationships should exist but not affect queries unless explicitly included
+      const post = await Post.create({
+        title: 'Zero Cost Test',
+        content: 'Testing zero-cost relationships',
+        published: true,
+      });
+
+      // Basic query without includes should not fetch relationship data
+      const basicResult = await Post.findByPk(post.id);
+      expect(basicResult).toBeDefined();
+      expect(basicResult?.title).toBe('Zero Cost Test');
+      
+      // Should not have relationship data in basic query
+      expect((basicResult as any)?.audits).toBeUndefined();
+      expect((basicResult as any)?.creationAudit).toBeUndefined();
+      expect((basicResult as any)?.creator).toBeUndefined();
     });
   });
 

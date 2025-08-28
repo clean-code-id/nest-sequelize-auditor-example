@@ -35,6 +35,7 @@ import { PostModule } from "./post/post.module";
       isGlobal: true, // Make it globally available
       onlyDirty: true, // 🆕 GLOBAL: Only log changed fields
       actorTypes: ['User'], // 🆕 Configure which models can be actors
+      creatorFields: ['id', 'name'], // 🆕 GLOBAL: Only include id and name in creator field
       auth: {
         type: "passport", // Use Passport.js authentication
         userProperty: "user", // Default: 'user' (req.user)

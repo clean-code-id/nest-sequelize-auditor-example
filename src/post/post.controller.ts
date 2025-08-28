@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   Request,
+  Query,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { PostService } from "./post.service";
@@ -21,6 +22,13 @@ export class PostController {
   @Get()
   async findAll(): Promise<Post[]> {
     return this.postService.findAll();
+  }
+
+  @Get("paginated")
+  async findAllWithPagination(@Query('page') page?: string, @Query('limit') limit?: string) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    return this.postService.findAllWithPagination(pageNum, limitNum);
   }
 
   @Get(":id")
